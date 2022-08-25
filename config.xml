@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<config>
+    <!-- Конфиг MQTT  -->
+    <MQTT name="MqttConfig">
+        <server host="192.168.174.64" port="1883" user="bot" pwd="bot" client_id="TelegrammBot" qos="0" reconnect="1000" >
+            <sub subj ="/topic/diag" />
+            <sub subj ="/topic/data" />
+            <sub subj ="/topic/devcontrol" type="out" />
+        </server>
+    </MQTT>
+
+    <!-- Конфиг бота  -->
+    <BOT>
+
+    </BOT>
+
+</config>

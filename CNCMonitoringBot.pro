@@ -1,6 +1,5 @@
-QT -= gui
-QT += network
-QT += xml
+QT += gui
+QT += network xml core sql
 
 CONFIG += c++11 console
 CONFIG -= app_bundle
@@ -18,9 +17,11 @@ DEFINES += HAVE_CURL
 
 SOURCES += \
         cnc_bot.cpp \
+        datasource.cpp \
         main.cpp \
         mqttclient.cpp \
-        mqttconnectiondispatcher.cpp
+        mqttconnectiondispatcher.cpp \
+        pollthread.cpp
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
@@ -57,8 +58,10 @@ DEPENDPATH += $$PWD/../../../../../usr/local/include
 
 HEADERS += \
     cnc_bot.h \
+    datasource.h \
     mqttclient.h \
-    mqttconnectiondispatcher.h
+    mqttconnectiondispatcher.h \
+    pollthread.h
 
 unix:!macx: LIBS += -L$$PWD/../../../../../../usr/local/lib/ -lqmqtt
 

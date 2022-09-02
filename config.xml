@@ -2,16 +2,23 @@
 <config>
     <!-- Конфиг MQTT  -->
     <MQTT name="MqttConfig">
-        <server host="192.168.174.64" port="1883" user="bot" pwd="bot" client_id="TelegrammBot" qos="0" reconnect="1000" >
+        <server host="192.168.174.64" port="1883" user="bot" pwd="bot" client_id="TelegrammBot" qos="0" reconnect="1000" active = "true">
             <sub subj ="/topic/diag" />
             <sub subj ="/topic/data" />
             <sub subj ="/topic/devcontrol" type="out" />
         </server>
     </MQTT>
 
+    <!-- Конфиг подключения к БД -->
+    <DATABASE >
+        <server host="192.168.174.64" port="3306" user="user" pwd="Mysql@robot1" active = "true">
+        </server>
+    </DATABASE>
+
     <!-- Конфиг бота  -->
     <BOT>
-
+       <device ota_url="http://192.168.172.36:8070/CurrentControl.bin" >
+       </device>
     </BOT>
 
 </config>

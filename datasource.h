@@ -19,7 +19,9 @@ public:
     QString GetDeviceField(QString aMac,QString aFieldName);
     QString GetDeviceEquipmentName  (QString aMac);
     QString GetDeviceWorkplaceName  (QString aMac);
-    QString GetDeviceMqttClientID   (QString aMac);
+    QStringList GetListDevicesMac ();
+
+
 
 private:
     ConfigXmlLib Config;
@@ -43,18 +45,18 @@ private:
     QString strDefaultHost              = "localhost";
     QString strDefaultPort              = "3306";
 
-    QString strDeviceSelectBase         =   "SELECT MAC_Address, MqttClientID, EquipmentName, WorkplaceName "
+    QString strDeviceSelectBase         =   "SELECT MAC_Address, EquipmentName, WorkplaceName "
                                             "FROM EquipmentSettings ES "
                                             "JOIN Equipments EQ on EQ.EquipmentSettingsID = ES.ID "
                                             "JOIN Workplaces WP ON WP.ID = EQ.WorkPlaceID "
                                             "Where MAC_Address ";
     QString strDeviceSelectAll          =    strDeviceSelectBase+" IS NOT NULL; ";
 
-    QString strMqttClientID             =   "MqttClientID";
     QString strEquipmentName            =   "EquipmentName";
     QString strWorkplaceName            =   "WorkplaceName";
-    //QString str
+    QString strMacAdress                =   "MAC_Address";
 
+    QString DBerr                       =   "";
 };
 
 #endif // DATASOURCE_H

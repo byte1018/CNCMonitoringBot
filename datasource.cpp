@@ -10,6 +10,7 @@ bool DataSource::CheckUserID(quint64 aUserID)
     bool result = false;
 
     tbUsers.exec("select TelegrammUserID from BotUsers where TelegrammUserID = "+ QString::number(aUserID));
+
     if (tbUsers.size() >0)
     {
         result = true;
@@ -50,6 +51,48 @@ bool DataSource::CheckUserPhone(qint64 aUserID, QString aUserName, QString aFirs
     }
     return result;
 }
+QStringList DataSource::GetListDevicesMac()
+{
+    QStringList result;
+    tbDevices.exec(strDeviceSelectAll);
+    if (tbDevices.size() >0)
+    {
+        int fieldNo = tbDevices.record().indexOf(strMacAdress);
+        while (tbDevices.next())
+        {
+            result.append(tbDevices.value(fieldNo).toString());
+        }
+
+    }
+
+    return result;
+}
+
+QString DataSource::GetDeviceEquipmentName(QString aMac)
+{
+    return GetDeviceField(aMac,strEquipmentName);
+}
+QString DataSource::GetDeviceWorkplaceName(QString aMac)
+{
+    return GetDeviceField(aMac,strWorkplaceName);
+}
+QString DataSource::GetDeviceField(QString aMac, QString aFieldName)
+{
+    QString result ="";
+    tbDevices.exec(strDeviceSelectBase+" = '"+aMac+"'");
+    if (tbDevices.size() >0)
+    {
+        tbDevices.first();
+        int fieldNo = tbDevices.record().indexOf(aFieldName);
+        result = tbDevices.value(fieldNo).toString();
+    }
+
+    return result;
+
+}
+
+
+
 void DataSource::Init()
 {
     if ( (Config.isParsedOK()) &  Config.SelectConfig(strConfigName)  )
@@ -89,35 +132,6 @@ void DataSource::Init()
 
     }
 }
-
-QString DataSource::GetDeviceEquipmentName(QString aMac)
-{
-    return GetDeviceField(aMac,strEquipmentName);
-}
-QString DataSource::GetDeviceWorkplaceName(QString aMac)
-{
-    return GetDeviceField(aMac,strWorkplaceName);
-}
-QString DataSource::GetDeviceMqttClientID(QString aMac)
-{
-    return GetDeviceField(aMac,strMqttClientID);
-}
-
-QString DataSource::GetDeviceField(QString aMac, QString aFieldName)
-{
-    QString result ="";
-    tbDevices.exec(strDeviceSelectBase+" = '"+aMac+"'");
-    if (tbDevices.size() >0)
-    {
-        tbDevices.first();
-        int fieldNo = tbDevices.record().indexOf(aFieldName);
-        result = tbDevices.value(fieldNo).toString();
-    }
-
-    return result;
-
-}
-
 
 
 

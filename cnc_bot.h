@@ -14,6 +14,7 @@
 #include <mqttconnectiondispatcher.h>
 #include <pollthread.h>
 #include <datasource.h>
+#include <configxmllib.h>
 
 #include "QString"
 #include <QStringList>
@@ -52,7 +53,11 @@ enum ConfigIndexes
     сfg_mqtt_id,
     cfg_mac,
     cfg_isregistred,
-    cfg_work_place
+    cfg_work_place,
+    cfg_free_ram,
+    cfg_current,
+    cfg_currentTS,
+    cfg_mesh_layer
 
 };
 
@@ -80,20 +85,28 @@ enum CmdIndexes
 
 struct tDevice
 {
-    float   MaxCurrent {0};
-    int     Delta{0};
-    QString FWVersion{""};
-    int     State {sd_disconnected};
-    QString EquipmentName{""};
-    QString WorkplaceName{""};
-    QString MqttClientID{""};
-    bool    isRegistred{false};
+    float       MaxCurrent {0};
+    int         Delta{0};
+    QString     FWVersion{""};
+    int         State {sd_disconnected};
+    QString     EquipmentName{""};
+    QString     WorkplaceName{""};
+    QString     MqttClientID{""};
+    bool        isRegistred{false};
+    qint64      LastInfoTS;
+    int         FreeRam{0};
+    float       LastCurrent;
+    qint64      LastCurrentTS;
+    int         MeshLayer{-1};
+
 
 };
 struct tChat
 {
-    QString curDevice{""};
-    Message::Ptr LastCmd {nullptr};
+    QString         curDevice{""};
+    Message::Ptr    LastCmd {nullptr};
+    Message::Ptr    LastMsg {nullptr};
+    qint64          LastSendTS{0};
 };
 
 typedef QMap<quint64, tChat> tListChats;
@@ -101,39 +114,22 @@ typedef QMap<QString,tDevice> tListDevices ;
 
 class cnc_bot : public QObject
 {
+
 public:
 
     cnc_bot(string _token): tgbot{_token,_curlHttpClient}
     {
 
     };
+
+    void Init();
     void onMsg(const Message::Ptr message);
     void onCmd(const Message::Ptr message);
     void onCallBackQuery(const CallbackQuery::Ptr callbackQuery);
     void onInlineQuery(const InlineQuery::Ptr inlineQuery);
     void onMqttMessage (QString aNameConnection,const QMQTT::Message& aMessage);
-    InlineKeyboardMarkup::Ptr GetMainMenu();
-    InlineKeyboardMarkup::Ptr GetDeviceKbd(QString aMac);
-    QString GetDeviceText(QString aDevice);
-    void Init();
 
-
-    QString mac_adress_str               = "mac_address";
-    QString current_str                  = "current";
-
-    QString config_max_current_str       = "max_current";
-    QString config_delta_current_str     = "delta_current";
-    QString config_version_str           = "version";
-
-
-    QString OTA_URL_str                  = "OTA_URL";
-    QString TS_str                       = "timestamp";
-    QString Current_str                  = "current";
-    QString All_str                      = "ALL";
-
-
-
-    QString Get_All_Info_str             = "{\"+TypeMsg\":\"CMD\",\"mac_address\":\"ALL\",\"CMD\":\"CMD_GET_CONFIG\"}";
+    QString Get_All_Info_str             = "{\"TypeMsg\":\"CMD\",\"mac_address\":\"ALL\",\"CMD\":\"CMD_GET_CONFIG\"}";
 
     QMap<int,QString> ListStatesDevice
     {
@@ -146,17 +142,40 @@ public:
 
     QMap<int,QString> ListCfgLabel
     {
-        {cfg_max_current,   "Максимальный ток (А) "},
-        {cfg_delta,         "Порог изменения тока (%) "},
-        {cfg_version,       "Версия прошивки "},
-        {cfg_state,         "Состояние "},
-        {cfg_description,   "Описание "},
-        {сfg_mqtt_id,       "Имя клиета Mqtt "},
-        {cfg_mac,           "МАС адрес "},
-        {cfg_isregistred,   "Зарегистрирован "},
-        {cfg_work_place,    "Расположение "}
+        {cfg_max_current,   "Максимальный ток (А)"},
+        {cfg_delta,         "Порог изменения тока (%)"},
+        {cfg_version,       "Версия прошивки"},
+        {cfg_state,         "Состояние"},
+        {cfg_description,   "Описание"},
+        {сfg_mqtt_id,       "Имя клиета Mqtt"},
+        {cfg_mac,           "МАС адрес"},
+        {cfg_isregistred,   "Зарегистрирован"},
+        {cfg_work_place,    "Расположение"},
+        {cfg_free_ram,      "Свободное ОЗУ"},
+        {cfg_current,       "Последнее значение тока"},
+        {cfg_currentTS,     "Отправлено в"},
+        {cfg_mesh_layer,    "Уровень mesh"}
+    };
+
+
+    QString current_str                  = "current";
+
+    QMap<int,QString> ListCfg
+    {
+        {cfg_max_current,   "max_current"},
+        {cfg_delta,         "delta_current"},
+        {cfg_version,       "version"},
+        {сfg_mqtt_id,       "mqtt_clientid"},
+        {cfg_mac,           "mac_address"},
+        {cfg_free_ram,      "free_memory"},
+        {cfg_current,       "current"},
+        {cfg_currentTS,     "timestamp"},
+        {cfg_mesh_layer,    "mesh_layer"}
+
+
 
     };
+
     QMap<int,QString> ListEventDevice
     {
         {ev_connected,"connected"},
@@ -218,18 +237,52 @@ public:
     QString Query_main_menu_str         = "MainMenu";
 
     QString ButtonText_main_menu_str    = "Cписок устройств";
-    QString SendContact_str             = "Отправить контакт";
+    QString ButtonText_refresh_str      = "Обновить";
+    QString ButtonText_SendContact_str  = "Отправить контакт";
 
+
+
+    QString OTA_URL_str                 = "OTA_URL";
+    QString OTA_URL_tag_str             = "ota_url";
+
+    QString TS_str                      = "timestamp";
+    QString All_str                     = "ALL";
+
+    QString ConfigName_str              =   "BOT";
+    QString Place_str                   =   "SET";
+
+
+    QString OTA_URL {""};
+    QString ret{"\n"};
+    QString delim{" - "};
+    QString query_delim {"*"};
+
+    void onPingTimer();
 
 private:
 
-
-    void CheckDevice(QByteArray aMsg);
     Message::Ptr SendMainMenu(uint64_t aChatid, int aMsgId = 0, QString aText="");
+    void SendDevMenu(uint64_t aChatid, QString aTypeMsg="");
+
     QString fromUtf8String(std::string aString);
+
+    QString GetDeviceText(QString aDevice);
+    InlineKeyboardMarkup::Ptr GetMainMenu();
+    InlineKeyboardMarkup::Ptr GetDeviceKbd(QString aMac);
 
     ReplyKeyboardMarkup::Ptr GetRequestPhoneKbd();
     ReplyKeyboardMarkup::Ptr GetRequestLocationKbd();
+
+
+
+    void BuildDevicesList();
+    void CheckDevice(QByteArray aMsg);
+    void AddDevice(QString aMac, int aState = sd_disconnected);
+
+    void ReadConfig();
+
+
+    ConfigXmlLib Config;
 
 
     Bot tgbot;
@@ -243,6 +296,11 @@ private:
     DataSource DS;
     tListChats ListChats;
     tListDevices ListDevices;
+    QTimer PingDeviceTimer;
+
+    int SendMsgIntervalMin{1200};
+    int PingDeviceInteval{SendMsgIntervalMin*8};
+    int TimeOutDevice{static_cast<int>(PingDeviceInteval*1.2)};
 
 };
 

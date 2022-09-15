@@ -8,7 +8,7 @@ MqttClient::MqttClient()
 
 void MqttClient::onConnect()
 {
-    printf("%s connected \n",Name.toStdString().c_str());
+    printf("Mqtt %s connected \n",Name.toStdString().c_str());
 
     auto itSub = InSub.cbegin();
     while (itSub != InSub.cend())
@@ -25,6 +25,8 @@ void MqttClient::onConnect()
 
 
 }
+
+
 void MqttClient::onReceive(const QMQTT::Message& message)
 {
     MsgHandler(Name,message);
@@ -33,6 +35,7 @@ void MqttClient::onReceive(const QMQTT::Message& message)
 void MqttClient::Send(QByteArray aMsg, QString aTopic)
 {
     QMQTT::Message message;
+    //printf("mqtt client send - %s\n",aMsg.toStdString().c_str());
     if (connectionState() == QMQTT::STATE_CONNECTED)
     {
         if (aTopic == "") {aTopic=DefaultOutSub;}

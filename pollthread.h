@@ -24,7 +24,6 @@ public :
 
         while(true)
         {
-            //printf("Long poll started \n");
             try
             {
                 longPoll.start();
@@ -32,7 +31,7 @@ public :
             }
             catch (exception& e)
             {
-                printf("Poll error: %s\n", e.what());
+                printf("Poll send error: %s\n", e.what());
             }
 
         }

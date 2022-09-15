@@ -17,8 +17,8 @@
 
     <!-- Конфиг бота  -->
     <BOT>
-       <device ota_url="http://192.168.172.36:8070/CurrentControl.bin" >
-       </device>
+       <SET ota_url="http://192.168.173.233:8070/CurrentControl.bin" >
+       </SET>
     </BOT>
 
 </config>

@@ -263,7 +263,7 @@ private:
 
     Message::Ptr SendMainMenu(uint64_t aChatid, int aMsgId = 0, QString aText="");
     void SendDevMenu(uint64_t aChatid, QString aTypeMsg="");
-
+    bool CheckNewText(uint64_t aChatid,QString aNewText);
     QString fromUtf8String(std::string aString);
 
     QString GetDeviceText(QString aDevice);

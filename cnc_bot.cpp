@@ -55,6 +55,19 @@ void cnc_bot::onMsg(const Message::Ptr message)
 
     }
 }
+
+bool cnc_bot::CheckNewText(uint64_t aChatid, QString aNewText)
+{
+    bool result = false;
+    QString old_text;
+    if ((ListChats.constFind(aChatid) != ListChats.constEnd())
+         && (ListChats[aChatid].LastMsg != nullptr))
+        {
+            old_text = fromUtf8String(ListChats[aChatid].LastMsg->text);
+        }
+    result = !(old_text == aNewText) ;
+    return result;
+}
 Message::Ptr cnc_bot::SendMainMenu(uint64_t aChatid, int aMsgId, QString aText)
 {
     Message::Ptr result;
@@ -66,14 +79,20 @@ Message::Ptr cnc_bot::SendMainMenu(uint64_t aChatid, int aMsgId, QString aText)
     {
         aText += "Устройства не найдены. ";
     }
-    aText += "("+QTime::currentTime().toString()+")";
+    aText += "("+QTime::currentTime().toString("HH:mm:ss:zzz")+")";
+
     if (aMsgId == 0)
     {
         result = tgbot.getApi().sendMessage(aChatid,aText.toStdString(),false, 0, GetMainMenu(),"Markdown");
     }
     else
     {
-        result = tgbot.getApi().editMessageText(aText.toStdString(),aChatid, aMsgId,"","Markdown",false,GetMainMenu());
+        if (CheckNewText(aChatid,aText))
+        {
+            result = tgbot.getApi().editMessageText(aText.toStdString(),aChatid, aMsgId,"","Markdown",false,GetMainMenu());
+        }
+
+
     }
     return result;
 }
@@ -303,13 +322,7 @@ void cnc_bot::SendDevMenu(uint64_t aChatid, QString aTypeMsg)
     {
         QString text = GetDeviceText(device);
         QString old_text;
-        if ((ListChats.constFind(aChatid) != ListChats.constEnd())
-             && (ListChats[aChatid].LastMsg != nullptr))
-            {
-                old_text = fromUtf8String(ListChats[aChatid].LastMsg->text);
-            }
-
-        if (!(old_text == text ) )
+        if (CheckNewText(aChatid,text))
         {
             try
             {
@@ -484,8 +497,10 @@ void cnc_bot::CheckDevice(QByteArray aMsg)
                 SendDevMenu(ChatIt.key(),type);
             }
             else
+            if (type == ListTypeMsg[tp_msg_info])
             {
-                SendMainMenu(ChatIt->LastMsg->chat->id,ChatIt->LastMsg->messageId);
+                if (ChatIt->LastMsg != nullptr)
+                {SendMainMenu(ChatIt->LastMsg->chat->id,ChatIt->LastMsg->messageId);}
             }
 
             ChatIt.operator++();

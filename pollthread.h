@@ -57,6 +57,7 @@ public:
         connect(this, &PollThread::operate, &worker, &Worker::start);
         connect(&worker, &Worker::resultReady, this, &PollThread::handleResults);
         workerThread.start();
+
         //printf("Controller started \n");
 
     };
